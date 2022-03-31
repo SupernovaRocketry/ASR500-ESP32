@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <SPI.h> //biblioteca permite a comunicação pelo protocolo SPI 
 #include <SD.h> //biblioteca permite ler e escrever no cartão SD
 #include <Wire.h> //permite comunicação I2C
@@ -26,14 +27,14 @@
 #define THRESHOLD_SUBIDA 2  //em metros
 
 //Definições de input, define cada pino para cada variável abaixo
-#define PINO_BUZZER 3
-#define PINO_BOTAO 2
-#define PINO_LED_VERD 6
-#define PINO_LED_VERM 5
-#define PINO_LED_AZUL 7
-#define REC_PRINCIPAL 8
-#define REC_SECUNDARIO 9
-#define PINO_SD_CS 4
+#define PINO_BUZZER 4
+#define PINO_BOTAO 14
+#define PINO_LED_VERD 25
+#define PINO_LED_VERM 32
+#define PINO_LED_AZUL 25
+#define REC_PRINCIPAL 26
+#define REC_SECUNDARIO 27
+#define PINO_SD_CS 5
 
 //definições de erros
 #define ERRO_BMP 'b' //inicializa uma variável de erro para o BMP 
