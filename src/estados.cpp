@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "Adafruit_BMP280.h"
+#include <Adafruit_BMP280.h>
 #include <SD.h> 
 #include <defs.h>
 #include <main.h>
@@ -10,7 +10,8 @@ extern bool subiu;
 extern bool descendo;
 extern char statusAtual;
 extern char erro;
-extern char nomeConcat[12];
+extern char nomeConcat[16];
+char nomeConcatL[16];
 extern float alturaMaxima;
 extern float alturaMinima;
 extern float alturaAtual;
@@ -255,7 +256,9 @@ void inicializa() {
 
 
   //inicializar o cartão SD
-  if (!SD.begin(PINO_SD_CS)) {
+  SPIClass spi = SPIClass(VSPI);
+  spi.begin(PINO_SD_SCK,PINO_SD_MISO,PINO_SD_MOSI,PINO_SD_CS);
+  if (!SD.begin(PINO_SD_CS, spi, 80000000)) {
 
     erro = ERRO_SD;
 
@@ -272,6 +275,7 @@ void inicializa() {
       Serial.println("não deveria estar aqui com o sd ligado");
 #endif
       sprintf(nomeConcat, "log%d.txt", n);
+      sprintf(nomeConcatL, "/log%d.txt", n);
       if (SD.exists(nomeConcat))
         n++;
       else

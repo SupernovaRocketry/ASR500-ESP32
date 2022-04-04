@@ -1,5 +1,6 @@
 #include <SPI.h> //biblioteca permite a comunicação pelo protocolo SPI 
 #include <SD.h> //biblioteca permite ler e escrever no cartão SD
+#include <FS.h>  //SD (File System)
 #include <Wire.h> //permite comunicação I2C
 #include <Arduino.h> //permite a compreensão do VSCode de que vamos programasr um Arduino
 #include "Adafruit_BMP280.h" //permite acesso às funções do BMP280
@@ -12,8 +13,8 @@
 
 
 //Definições de debug
-//#define DEBUG
-//#define DEBUG_TEMP
+#define DEBUG
+#define DEBUG_TEMP
 
 
 //Variáveis de bibliotecas, declarando objetos
@@ -21,7 +22,7 @@ Adafruit_BMP280 bmp;
 File arquivoLog;
 
 char nomeBase[] = "dataLog"; //não foi utilizada
-char nomeConcat[12]; //nome do arquivo
+char nomeConcat[16]; //nome do arquivo
 
 //Variáveis de timing
 unsigned long millisAtual   = 0; //atualiza o tempo atual 

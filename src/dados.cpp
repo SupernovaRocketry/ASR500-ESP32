@@ -10,7 +10,7 @@ extern float alturaAtual;
 extern float temperaturaAtual;
 
 extern char  statusAtual;
-extern char nomeConcat[12];
+extern char nomeConcat[16];
 
 extern String stringDados;
 
@@ -37,11 +37,12 @@ void gravaDados() {
     //para ser usado. Aqui, todos os dados são concatenados em uma string que dá
     //o formato das linhas do arquivo de log.
     if ((statusAtual == ESTADO_GRAVANDO) || (statusAtual == ESTADO_RECUPERANDO)) {
+        Serial.println(nomeConcat);
         arquivoLog = SD.open(nomeConcat, FILE_WRITE);
-        //  #ifdef DEBUG_TEMP
-        //  Serial.println("Estou gravando!");
-        //  digitalWrite(REC_PRINCIPAL, HIGH);
-        //  #endif
+        #ifdef DEBUG_TEMP
+            Serial.println("Estou gravando!");
+            digitalWrite(REC_PRINCIPAL, HIGH);
+        #endif
         stringDados = "";
         millisGravacao = millis();
         stringDados += millisGravacao;
