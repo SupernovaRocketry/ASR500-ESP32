@@ -274,15 +274,15 @@ void inicializa() {
 #ifdef DEBUG_TEMP
       Serial.println("não deveria estar aqui com o sd ligado");
 #endif
-      sprintf(nomeConcat, "/log%d.txt", n);
+      sprintf(nomeConcat, "log%d.txt", n);
       sprintf(nomeConcatL, "/log%d.txt", n);
-      if (SD.exists(nomeConcat))
+      if (SD.exists(nomeConcatL))
         n++;
       else
         parar = true;
     }
 
-    arquivoLog = SD.open(nomeConcat, FILE_WRITE);
+    arquivoLog = SD.open(nomeConcatL, FILE_WRITE);
     arquivoLog.close();
 
 #ifdef DEBUG

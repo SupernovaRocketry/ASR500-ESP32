@@ -39,6 +39,7 @@ void gravaDados() {
     if ((statusAtual == ESTADO_GRAVANDO) || (statusAtual == ESTADO_RECUPERANDO)) {
         Serial.println(nomeConcat);
         arquivoLog = SD.open(nomeConcat, FILE_WRITE);
+        Serial.println("Linha 42 Dados.cpp");
         #ifdef DEBUG_TEMP
             Serial.println("Estou gravando!");
             digitalWrite(REC_PRINCIPAL, HIGH);
