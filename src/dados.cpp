@@ -1,20 +1,21 @@
 #include <Arduino.h>
-#include "Adafruit_BMP280.h"
+#include "BMP280.h"
+#include "Wire.h"
 #include <SD.h>
 #include <defs.h>
 #include <main.h>
 
 
-extern float pressaoAtual;
-extern float alturaAtual;
-extern float temperaturaAtual;
+extern double pressaoAtual;
+extern double alturaAtual;
+extern double temperaturaAtual;
 
 extern char  statusAtual;
 extern char nomeConcat[16];
 
 extern String stringDados;
 
-extern Adafruit_BMP280 bmp; 
+extern BMP280 bmp; 
 extern File arquivoLog;
 
 extern unsigned long millisGravacao;
@@ -26,10 +27,9 @@ extern float alturaMaxima;
 void adquireDados() {
     //todas as medidas são feitas aqui em sequeência de maneira que os valores
     //sejam temporalmente próximos
+    char result = bmp.getTemperatureAndPressure(temperaturaAtual, pressaoAtual);
 
-    pressaoAtual = bmp.readPressure();
-    alturaAtual = bmp.readAltitude(PRESSAO_MAR);
-    temperaturaAtual = bmp.readTemperature();
+    alturaAtual = bmp.altitude(pressaoAtual, PRESSAO_MAR);
 }
 
 void gravaDados() {

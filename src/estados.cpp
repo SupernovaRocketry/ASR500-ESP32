@@ -1,5 +1,6 @@
 #include <Arduino.h>
-#include <Adafruit_BMP280.h>
+#include "BMP280.h"
+#include "Wire.h"
 #include <SD.h> 
 #include <defs.h>
 #include <main.h>
@@ -12,15 +13,16 @@ extern char statusAtual;
 extern char erro;
 extern char nomeConcat[16];
 char nomeConcatL[16];
-extern float alturaMaxima;
-extern float alturaMinima;
-extern float alturaAtual;
-extern float alturaInicial;
+extern double alturaMaxima;
+extern double alturaMinima;
+extern double alturaAtual;
+extern double alturaInicial;
+extern double pressaoAtual;
 extern int o;
 extern unsigned long millisAtual;
 extern unsigned long millisLed;
 extern unsigned long atualizaMillis;
-extern Adafruit_BMP280 bmp;
+extern BMP280 bmp;
 extern File arquivoLog;
 
 void leBotoes() {
@@ -245,20 +247,18 @@ void inicializa() {
   if (!bmp.begin()) {
     erro = ERRO_BMP;
   }
-  bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
-                  Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
-                  Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
-                  Adafruit_BMP280::FILTER_X16,      /* Filtering. */
-                  Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
+  bmp.setOversampling(4);
 
-  alturaInicial =  bmp.readAltitude(PRESSAO_MAR);
+
+
+  alturaInicial =  bmp.altitude(pressaoAtual, PRESSAO_MAR);
   alturaMinima = alturaInicial;
 
 
   //inicializar o cartão SD
   SPIClass spi = SPIClass(VSPI);
   spi.begin(PINO_SD_SCK,PINO_SD_MISO,PINO_SD_MOSI,PINO_SD_CS);
-  if (!SD.begin(PINO_SD_CS, spi, 80000000)) {
+  if (!SD.begin(PINO_SD_CS, spi)) { //, 80000000
 
     erro = ERRO_SD;
 
@@ -274,7 +274,7 @@ void inicializa() {
 #ifdef DEBUG_TEMP
       Serial.println("não deveria estar aqui com o sd ligado");
 #endif
-      sprintf(nomeConcat, "log%d.txt", n);
+      sprintf(nomeConcat, "/log%d.txt", n);
       sprintf(nomeConcatL, "/log%d.txt", n);
       if (SD.exists(nomeConcat))
         n++;
@@ -283,6 +283,8 @@ void inicializa() {
     }
 
     arquivoLog = SD.open(nomeConcat, FILE_WRITE);
+    arquivoLog.close();
+
 #ifdef DEBUG
     Serial.print("Salvando os dados no arquivo ");
     Serial.println(nomeConcat);

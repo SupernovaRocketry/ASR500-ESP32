@@ -3,7 +3,8 @@
 #include <FS.h>  //SD (File System)
 #include <Wire.h> //permite comunicação I2C
 #include <Arduino.h> //permite a compreensão do VSCode de que vamos programasr um Arduino
-#include "Adafruit_BMP280.h" //permite acesso às funções do BMP280
+#include "BMP280.h" //permite acesso às funções do BMP280
+#include "Wire.h"
 
 // Inclusão dos meus arquivos
 #include <defs.h>
@@ -18,7 +19,7 @@
 
 
 //Variáveis de bibliotecas, declarando objetos
-Adafruit_BMP280 bmp; 
+BMP280 bmp; 
 File arquivoLog;
 
 char nomeBase[] = "dataLog"; //não foi utilizada
@@ -34,13 +35,13 @@ int n = 0;
 int o =  0;
 
 //Variáveis de dados
-float alturaAtual;
-float alturaInicial;
-float alturaMinima;
-float alturaMaxima =  0;
-float pressaoAtual;
-float temperatura;
-float temperaturaAtual;
+double alturaAtual;
+double alturaInicial;
+double alturaMinima;
+double alturaMaxima =  0;
+double pressaoAtual;
+double temperatura;
+double temperaturaAtual;
 String stringDados;
 
 //variáveis de controle
