@@ -151,11 +151,6 @@ void notificaCodigo(void *pvParameters)
 {
     while (1)
     {
-        // Funcao para notificar qualquer tipo de problema através do buzzer e leds.
-
-        unsigned int frequencia[10];
-        // os tons aqui são tocados por um vetor que contem as frequências. Cada
-        // slot do mesmo define um espaço de 100ms.
 
 #ifdef DEBUG
         Serial.print("Status atual do altímetro:");
