@@ -1,160 +1,323 @@
-#include <SPI.h> //biblioteca permite a comunicação pelo protocolo SPI 
-#include <SD.h> //biblioteca permite ler e escrever no cartão SD
-#include <FS.h>  //SD (File System)
-#include <Wire.h> //permite comunicação I2C
+#include <SD.h>      //biblioteca permite ler e escrever no cartão SD
+#include <Wire.h>    //permite comunicação I2C
 #include <Arduino.h> //permite a compreensão do VSCode de que vamos programasr um Arduino
-#include "BMP280.h" //permite acesso às funções do BMP280
-#include "Wire.h"
+#include <BMP280.h>  //permite acesso às funções do BMP280
 
-// Inclusão dos meus arquivos
-#include <defs.h>
-#include <recuperacao.h>
-#include <estados.h>
-#include <dados.h>
+// Definições de sensores
+#define USANDO_BMP180
 
+// Definições default
+#define PRESSAO_MAR 1013.25
+#define THRESHOLD_DESCIDA 2  // em metros
+#define THRESHOLD_SUBIDA 2   // em metros
 
-//Definições de debug
-#define DEBUG
-#define DEBUG_TEMP
+// Definições de input, define cada pino para cada variável abaixo
+#define PINO_BUZZER 4
+#define PINO_BOTAO 14
+#define PINO_LED_VERD 25
+#define PINO_LED_VERM 32
+#define PINO_LED_AZUL 33
+#define REC_PRINCIPAL 26
+#define REC_SECUNDARIO 27
+#define PINO_SD_CS 5
 
+// definições de erros
+#define ERRO_BMP 'b' // inicializa uma variável de erro para o BMP
+#define ERRO_SD 's'  // inicializa uma variável de erro para o leitor SD
 
-//Variáveis de bibliotecas, declarando objetos
-BMP280 bmp; 
+// definição de estados
+#define ESTADO_GRAVANDO 'g'
+#define ESTADO_FINALIZADO 'f'
+#define ESTADO_RECUPERANDO 'r'
+#define ESTADO_ESPERA 'e'
+
+// Variáveis de bibliotecas, declarando objetos
+BMP280 bmp;
 File arquivoLog;
 
-char nomeBase[] = "dataLog"; //não foi utilizada
-char nomeConcat[16]; //nome do arquivo
+char nomeConcat[16]; // nome do arquivo
 
-//Variáveis de timing
-unsigned long millisAtual   = 0; //atualiza o tempo atual 
-unsigned long atualizaMillis = 0; 
-unsigned long millisLed   = 0;
-unsigned long millisGravacao  = 0;
-unsigned long millisRec = 1000000;
-int n = 0;
-int o =  0;
-
-//Variáveis de dados
+// Variáveis de dados
 double alturaAtual;
 double alturaInicial;
 double alturaMinima;
-double alturaMaxima =  0;
+double alturaMaxima = 0;
 double pressaoAtual;
 double temperatura;
 double temperaturaAtual;
-String stringDados;
+unsigned long millisRec;
 
-//variáveis de controle
-bool gravando = false;
+// variáveis de controle
 bool abriuParaquedas = false;
-char erro = false;
-char  statusAtual;
-bool estado;
+char statusAtual;
 bool descendo = false;
 bool subiu = false;
 
+// SemaphoreHandle_t xMutex;
 
+TaskHandle_t notifica;
+TaskHandle_t adquireDados;
+TaskHandle_t gravaDados;
+TaskHandle_t recupera;
 
-
-void setup() {
-
-#ifdef DEBUG
-  Serial.begin(115200);
-#endif
-
-#ifdef DEBUG_TEMP
-  Serial.begin(115200);
-
-#endif
-  //Faz o setup inicial dos sensores de movimento e altura assim
-  //como as portas
-
-#ifdef DEBUG
-  Serial.println("Iniciando o altímetro");
-#endif
-
-  inicializa();
-
+void IRAM_ATTR botaoPressionado()
+{
+    if (statusAtual == ESTADO_ESPERA)
+    {
+        statusAtual = ESTADO_GRAVANDO;
+    }
 }
 
+void inicializa()
+{
+    // Inicializando as portas
+    pinMode(PINO_BOTAO, INPUT_PULLUP);
+    pinMode(PINO_BUZZER, OUTPUT);
+    pinMode(PINO_LED_VERD, OUTPUT);
+    pinMode(PINO_LED_VERM, OUTPUT);
+    pinMode(PINO_LED_AZUL, OUTPUT);
+    // iniciando recuperação
+    pinMode(REC_PRINCIPAL, OUTPUT); // declara o pino do rec principal como output
+    pinMode(REC_SECUNDARIO, OUTPUT);
+    digitalWrite(REC_PRINCIPAL, LOW); // inicializa em baixa
+    digitalWrite(REC_SECUNDARIO, LOW);
 
+    // interrupt
+    attachInterrupt(digitalPinToInterrupt(PINO_BOTAO), botaoPressionado, FALLING);
 
+    char erro = 0;
 
-void loop() {
+    // Inicializando o Altímetro
+    if (!bmp.begin())
+    {
+        erro = ERRO_BMP;
+    }
+    bmp.setOversampling(4);
+    bmp.getTemperatureAndPressure(temperatura, pressaoAtual);
+    alturaInicial = bmp.altitude(pressaoAtual, PRESSAO_MAR);
+    alturaMinima = alturaInicial;
 
-  //Recebendo o tempo atual de maneira a ter uma base de tempo
-  //para uma taxa de atualização
-  millisAtual = millis();
+    // inicializar o cartão SD
+    if (!SD.begin(PINO_SD_CS))
+    {
+        erro = ERRO_SD;
+        return;
+    }
+    else if (!erro)
+    {
+        int n = 1;
+        bool parar = false;
 
-  if ((millis() - millisRec >= TEMPO_RELE) && abriuParaquedas){
-    digitalWrite(REC_PRINCIPAL, LOW); //COMENTAR LINHA CASO NÃO FOR NECESSÁRIO 
-    digitalWrite(REC_SECUNDARIO, HIGH); //aciona o relé secundário
-  }
-
-  if ((millisAtual - atualizaMillis) >= TEMPO_ATUALIZACAO) {
-#ifdef DEBUG_TEMP
-    Serial.print("Status atual:");
-    Serial.println(statusAtual);
-    Serial.print("estado atual de erro:");
-    Serial.println(erro);
+        while (!parar)
+        {
+#ifdef DEBUG
+            Serial.println("Contando arquivos");
 #endif
-    //verifica se existem erros e mantém tentando inicializar
-    if (erro) {
-      inicializa();
-      notifica(erro);
+            sprintf(nomeConcat, "/log%d.txt", n);
+            if (SD.exists(nomeConcat))
+                n++;
+            else
+                parar = true;
+        }
+
+        arquivoLog = SD.open(nomeConcat, FILE_WRITE);
+        arquivoLog.close();
+
+#ifdef DEBUG
+        Serial.print("Salvando o arquivo ");
+        Serial.println(nomeConcat);
+#endif
     }
 
-    //Se não existem erros no sistema relacionados a inicialização
-    //dos dispositivos, fazer:
-
-    if (!erro) {
-
+    if (!erro)
+    {
 #ifdef DEBUG
-      Serial.println("Rodando o loop de funções");
+        Serial.println("Nenhum erro iniciando dispositivos");
 #endif
-
-      //Verifica os botões e trata o clique simples e o clique longo
-      //como controle de início/fim da gravação.
-      leBotoes();
-
-#ifdef DEBUG
-      Serial.println("Li os botões");
-#endif
-
-      //Recebe os dados dos sensores e os deixa salvo em variáveis
-      adquireDados();
-#ifdef DEBUG
-      Serial.println("Adquiri os dados");
-#endif
-
-      //Trata os dados, fazendo filtragens e ajustes.
-      
-#ifdef DEBUG
-      Serial.println("Tratei os dados");
-#endif
-
-      //Se a gravação estiver ligada, grava os dados.
-      gravaDados();
-#ifdef DEBUG
-      Serial.println("Gravei os dados");
-#endif
-
-      //De acordo com os dados recebidos, verifica condições como a
-      //altura máxima atingida e seta variáveis de controle de modo
-      //que ações consequintes sejam tomadas.
-      checaCondicoes();
-
-      //Faz ajustes finais necessários
-      finaliza();
-
-      //Caso o voo tenha chegado ao ápice, libera o sistema de recuperação
-      recupera();
+        statusAtual = ESTADO_ESPERA;
     }
 
-    //Notifica via LEDs e buzzer problemas com o foguete
-    notifica(statusAtual);
+    else
+    {
+#ifdef DEBUG
+        Serial.print("Altímetro com erro de inicialização do código:");
+        Serial.println(erro);
+#endif
+        statusAtual = erro;
+    }
+}
 
-    atualizaMillis = millisAtual;
-  }
+void notificaCodigo(void *pvParameters)
+{
+    while (1)
+    {
+        // Funcao para notificar qualquer tipo de problema através do buzzer e leds.
 
+        unsigned int frequencia[10];
+        // os tons aqui são tocados por um vetor que contem as frequências. Cada
+        // slot do mesmo define um espaço de 100ms.
+
+#ifdef DEBUG
+        Serial.print("Status atual do altímetro:");
+        Serial.println(statusAtual);
+#endif
+        switch (statusAtual)
+        {
+        // Problema com o BMP, LED AZUL
+        case ERRO_BMP:
+            digitalWrite(PINO_BUZZER, !digitalRead(PINO_BUZZER));
+            digitalWrite(PINO_LED_AZUL, !digitalRead(PINO_LED_AZUL));
+            digitalWrite(PINO_LED_VERD, LOW);
+            digitalWrite(PINO_LED_VERM, LOW);
+            vTaskDelay(500 / portTICK_PERIOD_MS);
+            break;
+
+        // Problema com o SD, LED VERMELHO
+        case ERRO_SD:
+            digitalWrite(PINO_BUZZER, !digitalRead(PINO_BUZZER));
+            digitalWrite(PINO_LED_VERM, !digitalRead(PINO_LED_VERM));
+            digitalWrite(PINO_LED_AZUL, LOW);
+            digitalWrite(PINO_LED_VERD, LOW);
+            vTaskDelay(500 / portTICK_PERIOD_MS);
+            break;
+
+        // Estado onde o voo já terminou
+        case ESTADO_RECUPERANDO:
+            digitalWrite(PINO_BUZZER, !digitalRead(PINO_BUZZER));
+            digitalWrite(PINO_LED_VERD, !digitalRead(PINO_LED_VERD));
+            digitalWrite(PINO_LED_AZUL, LOW);
+            digitalWrite(PINO_LED_VERM, LOW);
+            vTaskDelay(250 / portTICK_PERIOD_MS);
+            break;
+
+        // Gravando
+        case ESTADO_GRAVANDO:
+            digitalWrite(PINO_BUZZER, !digitalRead(PINO_BUZZER));
+            digitalWrite(PINO_LED_AZUL, !digitalRead(PINO_LED_AZUL));
+            digitalWrite(PINO_LED_VERD, LOW);
+            digitalWrite(PINO_LED_VERM, LOW);
+            vTaskDelay(500 / portTICK_PERIOD_MS);
+            break;
+        // Espera
+        case ESTADO_ESPERA:
+            digitalWrite(PINO_LED_VERD, !digitalRead(PINO_LED_VERD));
+            digitalWrite(PINO_LED_AZUL, LOW);
+            digitalWrite(PINO_LED_VERD, LOW);
+            digitalWrite(PINO_LED_VERM, LOW);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            break;
+        default:
+            vTaskDelay(100 / portTICK_PERIOD_MS);
+            break;
+        }
+    }
+}
+void adquireDadosCodigo(void *pvParameters)
+{
+    while (1)
+    {
+        bmp.getTemperatureAndPressure(temperaturaAtual, pressaoAtual);
+        alturaAtual = bmp.altitude(pressaoAtual, PRESSAO_MAR);
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+    }
+}
+void gravaDadosCodigo(void *pvParameters)
+{
+    while (1)
+    {
+        // verifica aqui o estado do foguete e também se o arquivo está aberto e pronto
+        // para ser usado. Aqui, todos os dados são concatenados em uma string que dá
+        // o formato das linhas do arquivo de log.
+        if ((statusAtual == ESTADO_GRAVANDO) || (statusAtual == ESTADO_RECUPERANDO))
+        {
+            arquivoLog = SD.open(nomeConcat, FILE_WRITE);
+#ifdef DEBUG
+            Serial.println("Estou gravando!");
+            Serial.println(nomeConcat);
+#endif
+            String stringDados = "";
+            unsigned long millisGravacao = millis();
+            stringDados += millisGravacao;
+            stringDados += ",";
+            stringDados += abriuParaquedas;
+            stringDados += ",";
+            stringDados += alturaAtual;
+            stringDados += ",";
+            stringDados += alturaMaxima;
+            stringDados += ",";
+            stringDados += pressaoAtual;
+            stringDados += ",";
+            stringDados += temperaturaAtual;
+
+            arquivoLog.println(stringDados);
+            arquivoLog.close();
+            vTaskDelay(100 / portTICK_PERIOD_MS);
+        }
+    }
+}
+void recuperaCodigo(void *pvParameters)
+{
+    while (1)
+    {
+        // Funcao responsavel por checar condicoes e atualizar variaveis de extremos
+        // (altura maxima, altura minima, etc)
+
+        if (statusAtual == ESTADO_GRAVANDO)
+        {
+            alturaMinima = alturaAtual;
+        }
+        // alturaMinima
+        if ((alturaAtual < alturaMinima) && (statusAtual == ESTADO_GRAVANDO))
+            alturaMinima = alturaAtual;
+
+        // alturaMaxima
+        if (!subiu && (statusAtual == ESTADO_GRAVANDO))
+            alturaMaxima = 0;
+
+        // controle de subida
+        if ((alturaAtual > alturaMinima + THRESHOLD_SUBIDA) && (statusAtual == ESTADO_GRAVANDO) && !subiu)
+            subiu = true;
+
+        // primeira referencia de altura maxima
+        if (subiu && (alturaMaxima == 0) && (statusAtual == ESTADO_GRAVANDO))
+            alturaMaxima = alturaAtual;
+
+        // verificar a altura máxima
+        if ((alturaAtual > alturaMaxima) && (statusAtual == ESTADO_GRAVANDO) && subiu)
+            alturaMaxima = alturaAtual;
+
+        // Controle de descida, usando um threshold para evitar disparos não
+        // intencionais
+        if ((alturaAtual + THRESHOLD_DESCIDA < alturaMaxima) && (statusAtual == ESTADO_GRAVANDO) && subiu)
+        {
+            descendo = true;
+            subiu = false;
+            statusAtual = ESTADO_RECUPERANDO;
+            if (descendo && !abriuParaquedas)
+            {
+#ifdef DEBUG
+                Serial.println("Abrindo o paraquedas!");
+#endif
+                digitalWrite(REC_PRINCIPAL, HIGH);
+                millisRec = millis(); // armazena o horário que o paraquedas foi aberto
+                abriuParaquedas = 1;
+            }
+        }
+    }
+}
+void setup()
+{
+#ifdef DEBUG
+    Serial.begin(115200);
+    Serial.println("Iniciando o altímetro");
+#endif
+    inicializa();
+    xTaskCreate(notificaCodigo, "notifica", 2048, NULL, 3, &notifica);
+    xTaskCreate(adquireDadosCodigo, "adquireDados", 2048, NULL, 1, &adquireDados);
+    xTaskCreate(gravaDadosCodigo, "gravaDados", 2048, NULL, 2, &gravaDados);
+    xTaskCreate(recuperaCodigo, "recupera", 2048, NULL, 1, &recupera);
+}
+
+void loop()
+{
 }
