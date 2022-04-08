@@ -17,6 +17,7 @@
 #define DEBUG
 #define DEBUG_TEMP
 
+// sdgsdgsdgsdg
 
 //Variáveis de bibliotecas, declarando objetos
 BMP280 bmp; 
