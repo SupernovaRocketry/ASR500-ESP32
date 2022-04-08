@@ -3,13 +3,15 @@
 #include <Arduino.h> //permite a compreensão do VSCode de que vamos programasr um Arduino
 #include <BMP280.h>  //permite acesso às funções do BMP280
 
+#define DEBUG
+
 // Definições de sensores
 #define USANDO_BMP180
 
 // Definições default
 #define PRESSAO_MAR 1013.25
-#define THRESHOLD_DESCIDA 2  // em metros
-#define THRESHOLD_SUBIDA 2   // em metros
+#define THRESHOLD_DESCIDA 2 // em metros
+#define THRESHOLD_SUBIDA 2  // em metros
 
 // Definições de input, define cada pino para cada variável abaixo
 #define PINO_BUZZER 4
@@ -197,7 +199,6 @@ void notificaCodigo(void *pvParameters)
         case ESTADO_ESPERA:
             digitalWrite(PINO_LED_VERD, !digitalRead(PINO_LED_VERD));
             digitalWrite(PINO_LED_AZUL, LOW);
-            digitalWrite(PINO_LED_VERD, LOW);
             digitalWrite(PINO_LED_VERM, LOW);
             vTaskDelay(1000 / portTICK_PERIOD_MS);
             break;
@@ -225,7 +226,7 @@ void gravaDadosCodigo(void *pvParameters)
         // o formato das linhas do arquivo de log.
         if ((statusAtual == ESTADO_GRAVANDO) || (statusAtual == ESTADO_RECUPERANDO))
         {
-            arquivoLog = SD.open(nomeConcat, FILE_WRITE);
+            arquivoLog = SD.open(nomeConcat, FILE_APPEND);
 #ifdef DEBUG
             Serial.println("Estou gravando!");
             Serial.println(nomeConcat);
@@ -243,11 +244,15 @@ void gravaDadosCodigo(void *pvParameters)
             stringDados += pressaoAtual;
             stringDados += ",";
             stringDados += temperaturaAtual;
+#ifdef DEBUG
+            Serial.println(stringDados);
+#endif
 
-            arquivoLog.println(stringDados);
+            if(arquivoLog.print(stringDados))
+                Serial.println("Gravei dados no SD!");
             arquivoLog.close();
-            vTaskDelay(100 / portTICK_PERIOD_MS);
         }
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
 void recuperaCodigo(void *pvParameters)
@@ -298,6 +303,7 @@ void recuperaCodigo(void *pvParameters)
                 abriuParaquedas = 1;
             }
         }
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
 void setup()
@@ -307,12 +313,13 @@ void setup()
     Serial.println("Iniciando o altímetro");
 #endif
     inicializa();
-    xTaskCreate(notificaCodigo, "notifica", 2048, NULL, 3, &notifica);
+    xTaskCreate(notificaCodigo, "notifica", 2048, NULL, 1, &notifica);
     xTaskCreate(adquireDadosCodigo, "adquireDados", 2048, NULL, 1, &adquireDados);
-    xTaskCreate(gravaDadosCodigo, "gravaDados", 2048, NULL, 2, &gravaDados);
+    xTaskCreate(gravaDadosCodigo, "gravaDados", 2048, NULL, 1, &gravaDados);
     xTaskCreate(recuperaCodigo, "recupera", 2048, NULL, 1, &recupera);
 }
 
 void loop()
 {
+    delay(10);
 }
