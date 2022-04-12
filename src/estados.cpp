@@ -29,7 +29,7 @@ void leBotoes() {
   // Funcao responsavel por começar a gravar os dados no cartão SD. 
 
   millisAtual = millis();
-  estado = digitalRead(PINO_BOTAO);
+  estado = !digitalRead(PINO_BOTAO);
 
   //Liga a gravação se em espera
   if (estado && (statusAtual == ESTADO_ESPERA)) {
@@ -226,7 +226,7 @@ void notifica (char codigo) {
 void inicializa() {
 
   //Inicializando as portas
-  pinMode(PINO_BOTAO, INPUT);
+  pinMode(PINO_BOTAO, INPUT_PULLUP);
   pinMode(PINO_BUZZER, OUTPUT);
   pinMode(PINO_LED_VERD, OUTPUT);
   pinMode(PINO_LED_VERM, OUTPUT);

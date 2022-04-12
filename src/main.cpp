@@ -156,5 +156,5 @@ void loop() {
 
     atualizaMillis = millisAtual;
   }
-
+    delay(50);
 }
