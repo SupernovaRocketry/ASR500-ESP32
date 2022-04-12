@@ -62,13 +62,13 @@ TaskHandle_t adquireDados;
 TaskHandle_t gravaDados;
 TaskHandle_t recupera;
 
-void IRAM_ATTR botaoPressionado()
-{
-    if (statusAtual == ESTADO_ESPERA)
-    {
-        statusAtual = ESTADO_GRAVANDO;
-    }
-}
+// void IRAM_ATTR botaoPressionado()
+// {
+//     if ((statusAtual == ESTADO_ESPERA) && (!digitalRead(PINO_BOTAO)))
+//     {
+//         statusAtual = ESTADO_GRAVANDO;
+//     }
+// }
 
 void inicializa()
 {
@@ -85,7 +85,7 @@ void inicializa()
     digitalWrite(REC_SECUNDARIO, LOW);
 
     // interrupt
-    attachInterrupt(digitalPinToInterrupt(PINO_BOTAO), botaoPressionado, FALLING);
+    // attachInterrupt(digitalPinToInterrupt(PINO_BOTAO), botaoPressionado, RISING);
 
     char erro = 0;
 
@@ -98,9 +98,10 @@ void inicializa()
     bmp.getTemperatureAndPressure(temperatura, pressaoAtual);
     alturaInicial = bmp.altitude(pressaoAtual, PRESSAO_MAR);
     alturaMinima = alturaInicial;
+    SPIClass spi(VSPI);
 
     // inicializar o cartão SD
-    if (!SD.begin(PINO_SD_CS))
+    if (!SD.begin(PINO_SD_CS, spi,1000000))
     {
         erro = ERRO_SD;
         return;
@@ -136,7 +137,7 @@ void inicializa()
 #ifdef DEBUG
         Serial.println("Nenhum erro iniciando dispositivos");
 #endif
-        statusAtual = ESTADO_ESPERA;
+        statusAtual = ESTADO_GRAVANDO;
     }
 
     else
@@ -214,6 +215,7 @@ void adquireDadosCodigo(void *pvParameters)
     {
         bmp.getTemperatureAndPressure(temperaturaAtual, pressaoAtual);
         alturaAtual = bmp.altitude(pressaoAtual, PRESSAO_MAR);
+
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
