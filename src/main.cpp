@@ -1,161 +1,214 @@
-#include <SPI.h> //biblioteca permite a comunicação pelo protocolo SPI 
-#include <SD.h> //biblioteca permite ler e escrever no cartão SD
-#include <FS.h>  //SD (File System)
-#include <Wire.h> //permite comunicação I2C
-#include <Arduino.h> //permite a compreensão do VSCode de que vamos programasr um Arduino
-#include "BMP280.h" //permite acesso às funções do BMP280
-#include "Wire.h"
+/*
+  Rui Santos
+  Complete project details at https://RandomNerdTutorials.com/esp32-microsd-card-arduino/
+  
+  This sketch can be found at: Examples > SD(esp32) > SD_Test
+*/
 
-// Inclusão dos meus arquivos
-#include <defs.h>
-#include <recuperacao.h>
-#include <estados.h>
-#include <dados.h>
+#include "FS.h"
+#include "SD.h"
+#include "SPI.h"
 
+void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
+  Serial.printf("Listing directory: %s\n", dirname);
 
-//Definições de debug
-#define DEBUG
-#define DEBUG_TEMP
+  File root = fs.open(dirname);
+  if(!root){
+    Serial.println("Failed to open directory");
+    return;
+  }
+  if(!root.isDirectory()){
+    Serial.println("Not a directory");
+    return;
+  }
 
-// sdgsdgsdgsdg
-
-//Variáveis de bibliotecas, declarando objetos
-BMP280 bmp; 
-File arquivoLog;
-
-char nomeBase[] = "dataLog"; //não foi utilizada
-char nomeConcat[16]; //nome do arquivo
-
-//Variáveis de timing
-unsigned long millisAtual   = 0; //atualiza o tempo atual 
-unsigned long atualizaMillis = 0; 
-unsigned long millisLed   = 0;
-unsigned long millisGravacao  = 0;
-unsigned long millisRec = 1000000;
-int n = 0;
-int o =  0;
-
-//Variáveis de dados
-double alturaAtual;
-double alturaInicial;
-double alturaMinima;
-double alturaMaxima =  0;
-double pressaoAtual;
-double temperatura;
-double temperaturaAtual;
-String stringDados;
-
-//variáveis de controle
-bool gravando = false;
-bool abriuParaquedas = false;
-char erro = false;
-char  statusAtual;
-bool estado;
-bool descendo = false;
-bool subiu = false;
-
-
-
-
-void setup() {
-
-#ifdef DEBUG
-  Serial.begin(115200);
-#endif
-
-#ifdef DEBUG_TEMP
-  Serial.begin(115200);
-
-#endif
-  //Faz o setup inicial dos sensores de movimento e altura assim
-  //como as portas
-
-#ifdef DEBUG
-  Serial.println("Iniciando o altímetro");
-#endif
-
-  inicializa();
-
+  File file = root.openNextFile();
+  while(file){
+    if(file.isDirectory()){
+      Serial.print("  DIR : ");
+      Serial.println(file.name());
+      if(levels){
+        listDir(fs, file.name(), levels -1);
+      }
+    } else {
+      Serial.print("  FILE: ");
+      Serial.print(file.name());
+      Serial.print("  SIZE: ");
+      Serial.println(file.size());
+    }
+    file = root.openNextFile();
+  }
 }
 
+void createDir(fs::FS &fs, const char * path){
+  Serial.printf("Creating Dir: %s\n", path);
+  if(fs.mkdir(path)){
+    Serial.println("Dir created");
+  } else {
+    Serial.println("mkdir failed");
+  }
+}
 
+void removeDir(fs::FS &fs, const char * path){
+  Serial.printf("Removing Dir: %s\n", path);
+  if(fs.rmdir(path)){
+    Serial.println("Dir removed");
+  } else {
+    Serial.println("rmdir failed");
+  }
+}
 
+void readFile(fs::FS &fs, const char * path){
+  Serial.printf("Reading file: %s\n", path);
 
-void loop() {
-
-  //Recebendo o tempo atual de maneira a ter uma base de tempo
-  //para uma taxa de atualização
-  millisAtual = millis();
-
-  if ((millis() - millisRec >= TEMPO_RELE) && abriuParaquedas){
-    digitalWrite(REC_PRINCIPAL, LOW); //COMENTAR LINHA CASO NÃO FOR NECESSÁRIO 
-    digitalWrite(REC_SECUNDARIO, HIGH); //aciona o relé secundário
+  File file = fs.open(path);
+  if(!file){
+    Serial.println("Failed to open file for reading");
+    return;
   }
 
-  if ((millisAtual - atualizaMillis) >= TEMPO_ATUALIZACAO) {
-#ifdef DEBUG_TEMP
-    Serial.print("Status atual:");
-    Serial.println(statusAtual);
-    Serial.print("estado atual de erro:");
-    Serial.println(erro);
-#endif
-    //verifica se existem erros e mantém tentando inicializar
-    if (erro) {
-      inicializa();
-      notifica(erro);
-    }
-
-    //Se não existem erros no sistema relacionados a inicialização
-    //dos dispositivos, fazer:
-
-    if (!erro) {
-
-#ifdef DEBUG
-      Serial.println("Rodando o loop de funções");
-#endif
-
-      //Verifica os botões e trata o clique simples e o clique longo
-      //como controle de início/fim da gravação.
-      leBotoes();
-
-#ifdef DEBUG
-      Serial.println("Li os botões");
-#endif
-
-      //Recebe os dados dos sensores e os deixa salvo em variáveis
-      adquireDados();
-#ifdef DEBUG
-      Serial.println("Adquiri os dados");
-#endif
-
-      //Trata os dados, fazendo filtragens e ajustes.
-      
-#ifdef DEBUG
-      Serial.println("Tratei os dados");
-#endif
-
-      //Se a gravação estiver ligada, grava os dados.
-      gravaDados();
-#ifdef DEBUG
-      Serial.println("Gravei os dados");
-#endif
-
-      //De acordo com os dados recebidos, verifica condições como a
-      //altura máxima atingida e seta variáveis de controle de modo
-      //que ações consequintes sejam tomadas.
-      checaCondicoes();
-
-      //Faz ajustes finais necessários
-      finaliza();
-
-      //Caso o voo tenha chegado ao ápice, libera o sistema de recuperação
-      recupera();
-    }
-
-    //Notifica via LEDs e buzzer problemas com o foguete
-    notifica(statusAtual);
-
-    atualizaMillis = millisAtual;
+  Serial.print("Read from file: ");
+  while(file.available()){
+    Serial.write(file.read());
   }
+  file.close();
+}
+
+void writeFile(fs::FS &fs, const char * path, const char * message){
+  Serial.printf("Writing file: %s\n", path);
+
+  File file = fs.open(path, FILE_WRITE);
+  if(!file){
+    Serial.println("Failed to open file for writing");
+    return;
+  }
+  if(file.print(message)){
+    Serial.println("File written");
+  } else {
+    Serial.println("Write failed");
+  }
+  file.close();
+}
+
+void appendFile(fs::FS &fs, const char * path, const char * message){
+  Serial.printf("Appending to file: %s\n", path);
+
+  File file = fs.open(path, FILE_APPEND);
+  if(!file){
+    Serial.println("Failed to open file for appending");
+    return;
+  }
+  if(file.print(message)){
+      Serial.println("Message appended");
+  } else {
+    Serial.println("Append failed");
+  }
+  file.close();
+}
+
+void renameFile(fs::FS &fs, const char * path1, const char * path2){
+  Serial.printf("Renaming file %s to %s\n", path1, path2);
+  if (fs.rename(path1, path2)) {
+    Serial.println("File renamed");
+  } else {
+    Serial.println("Rename failed");
+  }
+}
+
+void deleteFile(fs::FS &fs, const char * path){
+  Serial.printf("Deleting file: %s\n", path);
+  if(fs.remove(path)){
+    Serial.println("File deleted");
+  } else {
+    Serial.println("Delete failed");
+  }
+}
+
+void testFileIO(fs::FS &fs, const char * path){
+  File file = fs.open(path);
+  static uint8_t buf[512];
+  size_t len = 0;
+  uint32_t start = millis();
+  uint32_t end = start;
+  if(file){
+    len = file.size();
+    size_t flen = len;
+    start = millis();
+    while(len){
+      size_t toRead = len;
+      if(toRead > 512){
+        toRead = 512;
+      }
+      file.read(buf, toRead);
+      len -= toRead;
+    }
+    end = millis() - start;
+    Serial.printf("%u bytes read for %u ms\n", flen, end);
+    file.close();
+  } else {
+    Serial.println("Failed to open file for reading");
+  }
+
+
+  file = fs.open(path, FILE_WRITE);
+  if(!file){
+    Serial.println("Failed to open file for writing");
+    return;
+  }
+
+  size_t i;
+  start = millis();
+  for(i=0; i<2048; i++){
+    file.write(buf, 512);
+  }
+  end = millis() - start;
+  Serial.printf("%u bytes written for %u ms\n", 2048 * 512, end);
+  file.close();
+}
+
+void setup(){
+  Serial.begin(115200);
+  if(!SD.begin(5)){
+    Serial.println("Card Mount Failed");
+    return;
+  }
+  uint8_t cardType = SD.cardType();
+
+  if(cardType == CARD_NONE){
+    Serial.println("No SD card attached");
+    return;
+  }
+
+  Serial.print("SD Card Type: ");
+  if(cardType == CARD_MMC){
+    Serial.println("MMC");
+  } else if(cardType == CARD_SD){
+    Serial.println("SDSC");
+  } else if(cardType == CARD_SDHC){
+    Serial.println("SDHC");
+  } else {
+    Serial.println("UNKNOWN");
+  }
+
+  uint64_t cardSize = SD.cardSize() / (1024 * 1024);
+  Serial.printf("SD Card Size: %lluMB\n", cardSize);
+
+  listDir(SD, "/", 0);
+  createDir(SD, "/mydir");
+  listDir(SD, "/", 0);
+  removeDir(SD, "/mydir");
+  listDir(SD, "/", 2);
+  writeFile(SD, "/hello.txt", "Hello ");
+  appendFile(SD, "/hello.txt", "World!\n");
+  readFile(SD, "/hello.txt");
+  deleteFile(SD, "/foo.txt");
+  renameFile(SD, "/hello.txt", "/foo.txt");
+  readFile(SD, "/foo.txt");
+  testFileIO(SD, "/test.txt");
+  Serial.printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
+  Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
+}
+
+void loop(){
 
 }
