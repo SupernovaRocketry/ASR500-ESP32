@@ -1,6 +1,12 @@
 #ifndef DEFS_H
 #define DEFS_H
 
+//Definições de debug
+#define DEBUG
+// #define DEBUG_TEMP
+#define DEBUG_TH
+
+
 //Definições de sensores
 
 #define USANDO_BMP180

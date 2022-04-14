@@ -1,9 +1,9 @@
-#include <SPI.h> //biblioteca permite a comunicação pelo protocolo SPI 
-#include <SD.h> //biblioteca permite ler e escrever no cartão SD
-#include <FS.h>  //SD (File System)
-#include <Wire.h> //permite comunicação I2C
-#include <Arduino.h> //permite a compreensão do VSCode de que vamos programasr um Arduino
-#include "BMP280.h" //permite acesso às funções do BMP280
+#include <SPI.h>        //biblioteca permite a comunicação pelo protocolo SPI 
+#include <SD.h>         //biblioteca permite ler e escrever no cartão SD
+#include <FS.h>         //SD (File System)
+#include <Wire.h>       //permite comunicação I2C
+#include <Arduino.h>    //permite a compreensão do VSCode de que vamos programasr um Arduino
+#include "BMP280.h"     //permite acesso às funções do BMP280
 #include "Wire.h"
 
 // Inclusão dos meus arquivos
@@ -12,10 +12,6 @@
 #include <estados.h>
 #include <dados.h>
 
-
-//Definições de debug
-#define DEBUG
-#define DEBUG_TEMP
 
 
 //Variáveis de bibliotecas, declarando objetos
@@ -64,17 +60,20 @@ void setup() {
 
 #ifdef DEBUG_TEMP
   Serial.begin(115200);
-
 #endif
+
+Serial.begin(115200);
+
+
   //Faz o setup inicial dos sensores de movimento e altura assim
   //como as portas
 
 #ifdef DEBUG
   Serial.println("Iniciando o altímetro");
 #endif
-
+  
   inicializa();
-
+  statusAtual = ESTADO_GRAVANDO;
 }
 
 

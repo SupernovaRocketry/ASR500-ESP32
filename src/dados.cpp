@@ -11,12 +11,13 @@ extern double alturaAtual;
 extern double temperaturaAtual;
 
 extern char  statusAtual;
-extern char nomeConcat[16];
+extern char nomeConcatL[16];
 
 extern String stringDados;
 
 extern BMP280 bmp; 
 extern File arquivoLog;
+File arquivoLog2;
 
 extern unsigned long millisGravacao;
 extern bool abriuParaquedas;
@@ -37,13 +38,17 @@ void gravaDados() {
     //para ser usado. Aqui, todos os dados são concatenados em uma string que dá
     //o formato das linhas do arquivo de log.
     if ((statusAtual == ESTADO_GRAVANDO) || (statusAtual == ESTADO_RECUPERANDO)) {
-        Serial.println(nomeConcat);
-        arquivoLog = SD.open(nomeConcat, FILE_WRITE);
-        Serial.println("Linha 42 Dados.cpp");
+        // Serial.print('nomeConcatL no dados.cpp: ');
+        Serial.println(nomeConcatL);
+        arquivoLog2 = SD.open("/log1.txt", FILE_APPEND);
         #ifdef DEBUG_TEMP
             Serial.println("Estou gravando!");
             digitalWrite(REC_PRINCIPAL, HIGH);
         #endif
+        // #ifdef DEBUG_TH
+        //     Serial.print("nomeConcatL dados.cpp: ");
+        //     Serial.println(nomeConcatL);
+        // #endif
         stringDados = "";
         millisGravacao = millis();
         stringDados += millisGravacao;

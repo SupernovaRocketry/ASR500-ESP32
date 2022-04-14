@@ -5,6 +5,8 @@
 #include <defs.h>
 #include <main.h>
 
+
+
 extern bool estado;
 extern bool gravando;
 extern bool subiu;
@@ -34,7 +36,7 @@ void leBotoes() {
   //Liga a gravação se em espera
   if (estado && (statusAtual == ESTADO_ESPERA)) {
       statusAtual = ESTADO_GRAVANDO;
-  }
+  }  
 }
 
 
@@ -241,7 +243,7 @@ void inicializa() {
   ledcAttachPin(PINO_BUZZER, 0);//Atribuimos o pino 2 ao canal 0.
   
 
-  erro = 0;
+  // erro = 0;                    // Atribuindo um valor inteiro para um variavel do tipo char
 
   //Inicializando o Altímetro
   if (!bmp.begin()) {
@@ -283,7 +285,16 @@ void inicializa() {
     }
 
     arquivoLog = SD.open(nomeConcatL, FILE_WRITE);
+    arquivoLog.println("tempo;paraquedas;altura_atual;altura_maxima;pressao_atual;temperatura_atual");
     arquivoLog.close();
+
+    #ifdef DEBUG_TH
+      arquivoLog = SD.open(nomeConcatL, FILE_APPEND);
+      Serial.print("nomeConcatL estados.cpp: ");
+      Serial.println(nomeConcatL);
+      arquivoLog.println("a;b;c;d;e;f");
+      arquivoLog.close();
+    #endif
 
 #ifdef DEBUG
     Serial.print("Salvando os dados no arquivo ");
