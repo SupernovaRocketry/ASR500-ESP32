@@ -26,11 +26,11 @@
 //Definições de input, define cada pino para cada variável abaixo
 #define PINO_BUZZER 4
 #define PINO_BOTAO 14
-#define PINO_LED_VERD 25
-#define PINO_LED_VERM 32
-#define PINO_LED_AZUL 33
-#define REC_PRINCIPAL 26
-#define REC_SECUNDARIO 27
+#define PINO_LED_VERM 25
+#define PINO_LED_VERD 27
+#define PINO_LED_AZUL 26
+#define REC_PRINCIPAL 32
+#define REC_SECUNDARIO 33
 #define PINO_SD_CS 5    //CS VSPI (SD)
 #define PINO_SD_SCK 18  //CLK VSPI (SD)
 #define PINO_SD_MISO 19 //MISO VSPI (SD)

@@ -62,7 +62,9 @@ void setup() {
   Serial.begin(115200);
 #endif
 
-Serial.begin(115200);
+#ifdef DEBUG_TH
+  // Serial.begin(115200);  
+#endif  
 
 
   //Faz o setup inicial dos sensores de movimento e altura assim
