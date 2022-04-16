@@ -25,7 +25,7 @@
 
 //Definições de input, define cada pino para cada variável abaixo
 #define PINO_BUZZER 4
-#define PINO_BOTAO 14
+#define PINO_BOTAO 34
 #define PINO_LED_VERM 25
 #define PINO_LED_VERD 27
 #define PINO_LED_AZUL 26
