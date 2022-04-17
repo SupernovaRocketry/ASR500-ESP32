@@ -11,13 +11,13 @@ extern double alturaAtual;
 extern double temperaturaAtual;
 
 extern char  statusAtual;
-extern char nomeConcatL[16];
+extern char nomeConcat[16];
 
 extern String stringDados;
 
 extern BMP280 bmp; 
 extern File arquivoLog;
-File arquivoLog2;
+extern SPIClass spi;
 
 extern unsigned long millisGravacao;
 extern bool abriuParaquedas;
@@ -28,8 +28,7 @@ extern float alturaMaxima;
 void adquireDados() {
     //todas as medidas são feitas aqui em sequeência de maneira que os valores
     //sejam temporalmente próximos
-    char result = bmp.getTemperatureAndPressure(temperaturaAtual, pressaoAtual);
-
+    bmp.getTemperatureAndPressure(temperaturaAtual, pressaoAtual);
     alturaAtual = bmp.altitude(pressaoAtual, PRESSAO_MAR);
 }
 
@@ -38,17 +37,11 @@ void gravaDados() {
     //para ser usado. Aqui, todos os dados são concatenados em uma string que dá
     //o formato das linhas do arquivo de log.
     if ((statusAtual == ESTADO_GRAVANDO) || (statusAtual == ESTADO_RECUPERANDO)) {
-        // Serial.print('nomeConcatL no dados.cpp: ');
-        Serial.println(nomeConcatL);
-        arquivoLog2 = SD.open("/log1.txt", FILE_APPEND);
+        arquivoLog = SD.open(nomeConcat, FILE_APPEND);
         #ifdef DEBUG_TEMP
             Serial.println("Estou gravando!");
             digitalWrite(REC_PRINCIPAL, HIGH);
         #endif
-        // #ifdef DEBUG_TH
-        //     Serial.print("nomeConcatL dados.cpp: ");
-        //     Serial.println(nomeConcatL);
-        // #endif
         stringDados = "";
         millisGravacao = millis();
         stringDados += millisGravacao;

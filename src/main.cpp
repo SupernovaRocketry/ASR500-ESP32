@@ -17,6 +17,7 @@
 //Variáveis de bibliotecas, declarando objetos
 BMP280 bmp; 
 File arquivoLog;
+SPIClass spi;
 
 char nomeBase[] = "dataLog"; //não foi utilizada
 char nomeConcat[16]; //nome do arquivo
@@ -32,7 +33,7 @@ int o =  0;
 
 //Variáveis de dados
 double alturaAtual;
-double alturaInicial;
+double alturaInicial = 0;
 double alturaMinima;
 double alturaMaxima =  0;
 double pressaoAtual;

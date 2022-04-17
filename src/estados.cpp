@@ -14,18 +14,21 @@ extern bool descendo;
 extern char statusAtual;
 extern char erro;
 extern char nomeConcat[16];
-char nomeConcatL[16];
 extern double alturaMaxima;
 extern double alturaMinima;
 extern double alturaAtual;
 extern double alturaInicial;
 extern double pressaoAtual;
+extern double temperaturaAtual;
 extern int o;
 extern unsigned long millisAtual;
 extern unsigned long millisLed;
 extern unsigned long atualizaMillis;
 extern BMP280 bmp;
 extern File arquivoLog;
+extern SPIClass spi;
+
+
 
 void leBotoes() {
   // Funcao responsavel por começar a gravar os dados no cartão SD. 
@@ -244,54 +247,54 @@ void inicializa() {
   
 
   // erro = 0;                    // Atribuindo um valor inteiro para um variavel do tipo char
+  erro = NULL;
 
   //Inicializando o Altímetro
-  if (!bmp.begin()) {
+  while(!bmp.begin()){
     erro = ERRO_BMP;
+    notifica(erro);
   }
   bmp.setOversampling(4);
 
 
-
-  alturaInicial =  bmp.altitude(pressaoAtual, PRESSAO_MAR);
+  for(int i = 0; i<8; i++){
+    bmp.getTemperatureAndPressure(temperaturaAtual, pressaoAtual);
+    alturaInicial += bmp.altitude(pressaoAtual, PRESSAO_MAR);
+  }
+  alturaInicial =  alturaInicial*0.125;
   alturaMinima = alturaInicial;
 
 
   //inicializar o cartão SD
-  SPIClass spi = SPIClass(VSPI);
+  spi = SPIClass(VSPI);
   spi.begin(PINO_SD_SCK,PINO_SD_MISO,PINO_SD_MOSI,PINO_SD_CS);
-  if (!SD.begin(PINO_SD_CS, spi)) { //, 80000000
-
+  while(!SD.begin(PINO_SD_CS, spi)){
     erro = ERRO_SD;
-
-    return;
+    notifica(erro);
   }
-  else if (!erro) {
+
+
+  if (!erro) {
     int n = 1;
     bool parar = false;
-
-
     while (!parar)
     {
-#ifdef DEBUG_TEMP
-      Serial.println("não deveria estar aqui com o sd ligado");
-#endif
-      sprintf(nomeConcat, "log%d.txt", n);
-      sprintf(nomeConcatL, "/log%d.txt", n);
-      if (SD.exists(nomeConcatL))
+      #ifdef DEBUG_TEMP
+            Serial.println("não deveria estar aqui com o sd ligado");
+      #endif
+      sprintf(nomeConcat, "/log%d.txt", n);
+      if (SD.exists(nomeConcat))
         n++;
       else
         parar = true;
     }
 
-    arquivoLog = SD.open(nomeConcatL, FILE_WRITE);
+    arquivoLog = SD.open(nomeConcat, FILE_WRITE);
     arquivoLog.println("tempo;paraquedas;altura_atual;altura_maxima;pressao_atual;temperatura_atual");
     arquivoLog.close();
 
     #ifdef DEBUG_TH
-      arquivoLog = SD.open(nomeConcatL, FILE_APPEND);
-      Serial.print("nomeConcatL estados.cpp: ");
-      Serial.println(nomeConcatL);
+      arquivoLog = SD.open(nomeConcat, FILE_APPEND);
       arquivoLog.println("a;b;c;d;e;f");
       arquivoLog.close();
     #endif
