@@ -256,7 +256,6 @@ void inicializa() {
   }
   bmp.setOversampling(4);
 
-
   for(int i = 0; i<8; i++){
     bmp.getTemperatureAndPressure(temperaturaAtual, pressaoAtual);
     alturaInicial += bmp.altitude(pressaoAtual, PRESSAO_MAR);
