@@ -29,7 +29,15 @@ void adquireDados() {
     //todas as medidas são feitas aqui em sequeência de maneira que os valores
     //sejam temporalmente próximos
     bmp.getTemperatureAndPressure(temperaturaAtual, pressaoAtual);
+    #ifdef DEBUG
+        Serial.print("Temperatura Atual: ");
+        Serial.println(temperaturaAtual);
+    #endif
     alturaAtual = bmp.altitude(pressaoAtual, PRESSAO_MAR);
+
+    #ifdef DEBUG
+        Serial.println("Adquiri os dados");
+    #endif
 }
 
 void gravaDados() {
@@ -61,5 +69,7 @@ void gravaDados() {
         arquivoLog.close();
     }
 
-
+    #ifdef DEBUG
+        Serial.println("Gravei os dados");
+    #endif
 }

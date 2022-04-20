@@ -16,8 +16,8 @@ extern char erro;
 extern char nomeConcat[16];
 extern double alturaMaxima;
 extern double alturaMinima;
-extern double alturaAtual;
 extern double alturaInicial;
+extern double alturaAtual;
 extern double pressaoAtual;
 extern double temperaturaAtual;
 extern int o;
@@ -39,7 +39,11 @@ void leBotoes() {
   //Liga a gravação se em espera
   if (estado && (statusAtual == ESTADO_ESPERA)) {
       statusAtual = ESTADO_GRAVANDO;
-  }  
+  }
+
+  #ifdef DEBUG
+    Serial.println("Li os botões");
+  #endif  
 }
 
 
@@ -79,6 +83,10 @@ void checaCondicoes() {
     subiu = false;
     statusAtual = ESTADO_RECUPERANDO;
   }
+
+  #ifdef DEBUG
+    Serial.println("Chequei as condições!");
+  #endif
 }
 
 

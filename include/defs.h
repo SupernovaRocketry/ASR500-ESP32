@@ -4,7 +4,7 @@
 //Definições de debug
 #define DEBUG
 // #define DEBUG_TEMP
-#define DEBUG_TH
+// #define DEBUG_TH
 
 
 //Definições de sensores
