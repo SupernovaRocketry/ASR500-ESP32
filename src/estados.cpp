@@ -35,10 +35,10 @@ void leBotoes() {
   // Funcao responsavel por começar a gravar os dados no cartão SD. 
 
   millisAtual = millis();
-  estado = !digitalRead(PINO_BOTAO);
+  estado = digitalRead(PINO_BOTAO);
 
   //Liga a gravação se em espera
-  if (estado && (statusAtual == ESTADO_ESPERA)) {
+  if (!estado && (statusAtual == ESTADO_ESPERA)) {
       statusAtual = ESTADO_GRAVANDO;
   }
 
@@ -256,7 +256,7 @@ void inicializa() {
   
 
   // erro = 0;                    // Atribuindo um valor inteiro para um variavel do tipo char
-  erro = NULL;
+  erro = '\0';
 
   //Inicializando o Altímetro
 
@@ -266,17 +266,23 @@ void inicializa() {
   }
 
   bmp.setOversampling(4);
-  result = bmp.startMeasurment();
-  delay(result);
   
-  if (result != 0){
-    for(int i = 0; i<8; i++){
-      bmp.getTemperatureAndPressure(temperaturaAtual, pressaoAtual);
-      alturaInicial += bmp.altitude(pressaoAtual, PRESSAO_MAR);
+  
+
+  for(int i = 0; i<8; i++){
+    while(result != 1){
+      result = bmp.startMeasurment();
+      delay(result);
+      erro = ERRO_BMP;
+      notifica(erro);
     }
-    alturaInicial =  alturaInicial*0.125;
-    alturaMinima = alturaInicial;
+    bmp.getTemperatureAndPressure(temperaturaAtual, pressaoAtual);
+    alturaInicial += bmp.altitude(pressaoAtual, PRESSAO_MAR);
+    result = 0;
   }
+  alturaInicial =  alturaInicial*0.125;
+  alturaMinima = alturaInicial;
+
 
   //inicializar o cartão SD
   spi = SPIClass(VSPI);

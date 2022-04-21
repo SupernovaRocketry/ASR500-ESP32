@@ -1,3 +1,4 @@
+// Inclusão das bibliotecas utilizadas
 #include <SPI.h>        //biblioteca permite a comunicação pelo protocolo SPI 
 #include <SD.h>         //biblioteca permite ler e escrever no cartão SD
 #include <FS.h>         //SD (File System)
@@ -14,16 +15,15 @@
 
 
 
-//Variáveis de bibliotecas, declarando objetos
+// Variáveis de bibliotecas, declarando objetos
 BMP280 bmp; 
 File arquivoLog;
 SPIClass spi;
 
-char nomeBase[] = "dataLog"; //não foi utilizada
-char nomeConcat[16]; //nome do arquivo
-char result;
+// char nomeBase[] = "dataLog"; //não foi utilizada
 
-//Variáveis de timing
+
+// Variáveis de timing
 unsigned long millisAtual   = 0; //atualiza o tempo atual 
 unsigned long atualizaMillis = 0; 
 unsigned long millisLed   = 0;
@@ -40,9 +40,11 @@ double alturaMaxima =  0;
 double pressaoAtual;
 double temperatura;
 double temperaturaAtual;
+char nomeConcat[16]; //nome do arquivo
+char result = 0;
 String stringDados;
 
-//variáveis de controle
+// variáveis de controle
 bool gravando = false;
 bool abriuParaquedas = false;
 char erro = false;

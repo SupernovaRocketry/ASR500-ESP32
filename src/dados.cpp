@@ -59,15 +59,15 @@ void gravaDados() {
         stringDados = "";
         millisGravacao = millis();
         stringDados += millisGravacao;
-        stringDados += ",";
+        stringDados += ";";
         stringDados += abriuParaquedas;
-        stringDados += ",";
+        stringDados += ";";
         stringDados += alturaAtual;
-        stringDados += ",";
+        stringDados += ";";
         stringDados += alturaMaxima;
-        stringDados += ",";
+        stringDados += ";";
         stringDados += pressaoAtual;
-        stringDados += ",";
+        stringDados += ";";
         stringDados += temperaturaAtual;
 
 
