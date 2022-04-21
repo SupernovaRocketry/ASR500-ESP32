@@ -12,6 +12,7 @@ extern double temperaturaAtual;
 
 extern char  statusAtual;
 extern char nomeConcat[16];
+extern char result;
 
 extern String stringDados;
 
@@ -28,16 +29,21 @@ extern float alturaMaxima;
 void adquireDados() {
     //todas as medidas são feitas aqui em sequeência de maneira que os valores
     //sejam temporalmente próximos
-    bmp.getTemperatureAndPressure(temperaturaAtual, pressaoAtual);
-    #ifdef DEBUG
-        Serial.print("Temperatura Atual: ");
-        Serial.println(temperaturaAtual);
-    #endif
-    alturaAtual = bmp.altitude(pressaoAtual, PRESSAO_MAR);
 
-    #ifdef DEBUG
-        Serial.println("Adquiri os dados");
-    #endif
+    result = bmp.startMeasurment();
+
+    if(result != 0){
+        delay(result);
+        result = bmp.getTemperatureAndPressure(temperaturaAtual, pressaoAtual);
+        if(result != 0){
+            alturaAtual = bmp.altitude(pressaoAtual, PRESSAO_MAR);
+            #ifdef DEBUG
+                Serial.print("Temperatura Atual: ");
+                Serial.println(temperaturaAtual);
+                Serial.println("Adquiri os dados");
+            #endif
+        }
+    }    
 }
 
 void gravaDados() {

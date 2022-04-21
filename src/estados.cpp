@@ -14,6 +14,7 @@ extern bool descendo;
 extern char statusAtual;
 extern char erro;
 extern char nomeConcat[16];
+extern char result;
 extern double alturaMaxima;
 extern double alturaMinima;
 extern double alturaInicial;
@@ -258,19 +259,24 @@ void inicializa() {
   erro = NULL;
 
   //Inicializando o Altímetro
+
   while(!bmp.begin()){
     erro = ERRO_BMP;
     notifica(erro);
   }
+
   bmp.setOversampling(4);
-
-  for(int i = 0; i<8; i++){
-    bmp.getTemperatureAndPressure(temperaturaAtual, pressaoAtual);
-    alturaInicial += bmp.altitude(pressaoAtual, PRESSAO_MAR);
+  result = bmp.startMeasurment();
+  delay(result);
+  
+  if (result != 0){
+    for(int i = 0; i<8; i++){
+      bmp.getTemperatureAndPressure(temperaturaAtual, pressaoAtual);
+      alturaInicial += bmp.altitude(pressaoAtual, PRESSAO_MAR);
+    }
+    alturaInicial =  alturaInicial*0.125;
+    alturaMinima = alturaInicial;
   }
-  alturaInicial =  alturaInicial*0.125;
-  alturaMinima = alturaInicial;
-
 
   //inicializar o cartão SD
   spi = SPIClass(VSPI);
@@ -306,10 +312,10 @@ void inicializa() {
       arquivoLog.close();
     #endif
 
-#ifdef DEBUG
-    Serial.print("Salvando os dados no arquivo ");
-    Serial.println(nomeConcat);
-#endif
+  #ifdef DEBUG
+      Serial.print("Salvando os dados no arquivo ");
+      Serial.println(nomeConcat);
+  #endif
 
   }
 

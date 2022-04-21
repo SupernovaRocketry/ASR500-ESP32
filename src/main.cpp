@@ -21,6 +21,7 @@ SPIClass spi;
 
 char nomeBase[] = "dataLog"; //não foi utilizada
 char nomeConcat[16]; //nome do arquivo
+char result;
 
 //Variáveis de timing
 unsigned long millisAtual   = 0; //atualiza o tempo atual 
