@@ -24,7 +24,7 @@
 #define THRESHOLD_SUBIDA 2  //em metros
 
 //Definições de input, define cada pino para cada variável abaixo
-#define PINO_BUZZER 4
+#define PINO_BUZZER 13
 #define PINO_BOTAO 34
 #define PINO_LED_VERM 25
 #define PINO_LED_VERD 27

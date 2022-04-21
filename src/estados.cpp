@@ -251,7 +251,7 @@ void inicializa() {
   digitalWrite(REC_PRINCIPAL, LOW); //inicializa em baixa 
   digitalWrite(REC_SECUNDARIO, LOW);
 
-  ledcAttachPin(PINO_BUZZER, 0);//Atribuimos o pino 2 ao canal 0.
+  ledcAttachPin(PINO_BUZZER, 0);      //Atribuimos o pino 2 ao canal 0.
   
 
   // erro = 0;                    // Atribuindo um valor inteiro para um variavel do tipo char
