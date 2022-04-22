@@ -139,7 +139,7 @@ void loop() {
         checaCondicoes();
 
         //Faz ajustes finais necessários
-        finaliza();
+        // finaliza();
 
         //Caso o voo tenha chegado ao ápice, libera o sistema de recuperação
         recupera();
@@ -150,5 +150,5 @@ void loop() {
 
     atualizaMillis = millisAtual;
   }
-    delay(100);
+    // delay(100);
 }

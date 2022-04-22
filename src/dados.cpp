@@ -22,7 +22,8 @@ extern SPIClass spi;
 
 extern unsigned long millisGravacao;
 extern bool abriuParaquedas;
-extern float alturaMaxima;
+extern double alturaMaxima;
+extern double alturaInicial;
 
 
 
@@ -64,11 +65,15 @@ void gravaDados() {
         stringDados += ";";
         stringDados += alturaAtual;
         stringDados += ";";
+        stringDados += alturaInicial;
+        stringDados += ";";
         stringDados += alturaMaxima;
         stringDados += ";";
         stringDados += pressaoAtual;
         stringDados += ";";
         stringDados += temperaturaAtual;
+        stringDados += ";";
+        stringDados += statusAtual;
 
 
         arquivoLog.println(stringDados);

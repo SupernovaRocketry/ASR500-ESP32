@@ -96,6 +96,7 @@ void finaliza() {
 
 
 void notifica (char codigo) {
+  millisAtual = millis();
   // Funcao para notificar qualquer tipo de problema através do buzzer e leds.
 
   unsigned int frequencia[10];
@@ -124,8 +125,10 @@ void notifica (char codigo) {
       frequencia[9] = 196;
 
       if (millisAtual - millisLed > 100) {
-        digitalWrite(PINO_LED_AZUL, !digitalRead(PINO_LED_AZUL));
-        // digitalWrite(PINO_LED_VERD, !digitalRead(PINO_LED_VERM));
+        // LED amarelo piscando rapido.
+        digitalWrite(PINO_LED_VERD, !digitalRead(PINO_LED_VERD));
+        digitalWrite(PINO_LED_VERM, !digitalRead(PINO_LED_VERM));
+        digitalWrite(PINO_LED_AZUL, LOW);
         millisLed = millisAtual;
       }
 
@@ -147,7 +150,10 @@ void notifica (char codigo) {
       frequencia[9] = 196;
 
       if (millisAtual - millisLed > 100) {
+        // LED vermelho piscando rapido        
         digitalWrite(PINO_LED_VERM, !digitalRead(PINO_LED_VERM));
+        digitalWrite(PINO_LED_AZUL, LOW);
+        digitalWrite(PINO_LED_VERD, LOW);
         millisLed = millisAtual;
       }
 
@@ -169,6 +175,7 @@ void notifica (char codigo) {
       frequencia[9] = 0;
 
       if (millisAtual - millisLed > 100) {
+        // LED verde piscando rapido
         digitalWrite(PINO_LED_VERD, !digitalRead(PINO_LED_VERD));
         digitalWrite(PINO_LED_AZUL, LOW);
         digitalWrite(PINO_LED_VERM, LOW);
@@ -193,6 +200,7 @@ void notifica (char codigo) {
       frequencia[9] = 0;
 
       if (millisAtual - millisLed > 100) {
+        // LED azul piscando rapido
         digitalWrite(PINO_LED_AZUL, !digitalRead(PINO_LED_AZUL));
         digitalWrite(PINO_LED_VERD, LOW);
         digitalWrite(PINO_LED_VERM, LOW);
@@ -202,7 +210,7 @@ void notifica (char codigo) {
       break;
 
     case ESTADO_ESPERA:
-      //led verde piscando devagar indicando espera
+      // LED verde piscando devagar indicando espera
       if (millisAtual - millisLed > 500) {
         digitalWrite(PINO_LED_VERD, !digitalRead(PINO_LED_VERD));
         millisLed = millisAtual;
@@ -252,7 +260,7 @@ void inicializa() {
   digitalWrite(REC_PRINCIPAL, LOW); //inicializa em baixa 
   digitalWrite(REC_SECUNDARIO, LOW);
 
-  ledcAttachPin(PINO_BUZZER, 0);      //Atribuimos o pino 2 ao canal 0.
+  ledcAttachPin(PINO_BUZZER, 0);
   
 
   // erro = 0;                    // Atribuindo um valor inteiro para um variavel do tipo char
@@ -270,19 +278,19 @@ void inicializa() {
   
 
   for(int i = 0; i<8; i++){
-    while(result != 1){
+    result = bmp.startMeasurment();
+    delay(result);
+    while(result == 0){       // result = 0 significa falha na medição. Outros valores dependem do Oversampling.
       result = bmp.startMeasurment();
-      delay(result);
+      delay(result);   
       erro = ERRO_BMP;
       notifica(erro);
     }
     bmp.getTemperatureAndPressure(temperaturaAtual, pressaoAtual);
     alturaInicial += bmp.altitude(pressaoAtual, PRESSAO_MAR);
-    result = 0;
   }
   alturaInicial =  alturaInicial*0.125;
-  alturaMinima = alturaInicial;
-
+ 
 
   //inicializar o cartão SD
   spi = SPIClass(VSPI);
@@ -309,7 +317,7 @@ void inicializa() {
     }
 
     arquivoLog = SD.open(nomeConcat, FILE_WRITE);
-    arquivoLog.println("tempo;paraquedas;altura_atual;altura_maxima;pressao_atual;temperatura_atual");
+    arquivoLog.println("tempo;paraquedas;altura_atual;altura_inicial;altura_maxima;pressao_atual;temperatura_atual;estado_atual");
     arquivoLog.close();
 
     #ifdef DEBUG_TH

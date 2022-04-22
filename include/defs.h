@@ -27,8 +27,8 @@
 #define PINO_BUZZER 13
 #define PINO_BOTAO 34
 #define PINO_LED_VERM 25
-#define PINO_LED_VERD 27
-#define PINO_LED_AZUL 26
+#define PINO_LED_VERD 26
+#define PINO_LED_AZUL 27
 #define REC_PRINCIPAL 32
 #define REC_SECUNDARIO 33
 #define PINO_SD_CS 5    //CS VSPI (SD)
