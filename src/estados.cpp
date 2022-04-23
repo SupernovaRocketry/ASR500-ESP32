@@ -29,6 +29,10 @@ extern BMP280 bmp;
 extern File arquivoLog;
 extern SPIClass spi;
 
+#ifdef DEBUG_COND
+  File arquivoCond;
+#endif
+
 
 
 void leBotoes() {
@@ -52,30 +56,65 @@ void checaCondicoes() {
   // Funcao responsavel por checar condicoes e atualizar variaveis de extremos
   // (altura maxima, altura minima, etc)
 
+  #ifdef DEBUG_COND
+    arquivoCond = SD.open("condicao.txt", FILE_APPEND);
+    arquivoCond.print(millisAtual);
+  #endif
+
   if ((statusAtual == ESTADO_GRAVANDO) && !gravando ) {
     alturaMinima = alturaAtual;
     gravando = true;
+
+    #ifdef DEBUG_COND
+      arquivoCond.print("a");
+    #endif
   }
 
   //alturaMinima
-  if ((alturaAtual < alturaMinima) && (statusAtual == ESTADO_GRAVANDO))
+  if ((alturaAtual < alturaMinima) && (statusAtual == ESTADO_GRAVANDO)){
     alturaMinima = alturaAtual;
+    
+    #ifdef DEBUG_COND
+      arquivoCond.print("b");
+    #endif
+  }
+ 
 
   //alturaMaxima
-  if (!subiu && (statusAtual == ESTADO_GRAVANDO))
+  if (!subiu && (statusAtual == ESTADO_GRAVANDO)){
     alturaMaxima = 0;
 
+    #ifdef DEBUG_COND
+      arquivoCond.print("c");
+    #endif
+  }
+
   //controle de subida
-  if ((alturaAtual > alturaMinima + THRESHOLD_SUBIDA) && (statusAtual == ESTADO_GRAVANDO) && !subiu )
+  if ((alturaAtual > alturaMinima + THRESHOLD_SUBIDA) && (statusAtual == ESTADO_GRAVANDO) && !subiu ){
     subiu = true;
 
+    #ifdef DEBUG_COND
+      arquivoCond.print("d");
+    #endif
+  }
+
   //primeira referencia de altura maxima
-  if (subiu && (alturaMaxima == 0) && (statusAtual == ESTADO_GRAVANDO))
+  if (subiu && (alturaMaxima == 0) && (statusAtual == ESTADO_GRAVANDO)){
     alturaMaxima = alturaAtual;
 
+    #ifdef DEBUG_COND
+      arquivoCond.print("e");
+    #endif
+  }
+
   //verificar a altura máxima
-  if ((alturaAtual > alturaMaxima) && (statusAtual == ESTADO_GRAVANDO) && subiu)
+  if ((alturaAtual > alturaMaxima) && (statusAtual == ESTADO_GRAVANDO) && subiu){
     alturaMaxima =  alturaAtual;
+
+    #ifdef DEBUG_COND
+      arquivoCond.print("f");
+    #endif
+  }
 
   //Controle de descida, usando um threshold para evitar disparos não
   //intencionais
@@ -83,7 +122,16 @@ void checaCondicoes() {
     descendo = true;
     subiu = false;
     statusAtual = ESTADO_RECUPERANDO;
+
+    #ifdef DEBUG_COND
+      arquivoCond.print("g");
+    #endif
   }
+
+  #ifdef DEBUG_COND
+    arquivoCond.println("");
+    arquivoCond.close();
+  #endif
 
   #ifdef DEBUG
     Serial.println("Chequei as condições!");
@@ -319,12 +367,6 @@ void inicializa() {
     arquivoLog = SD.open(nomeConcat, FILE_WRITE);
     arquivoLog.println("tempo;paraquedas;altura_atual;altura_inicial;altura_maxima;pressao_atual;temperatura_atual;estado_atual");
     arquivoLog.close();
-
-    #ifdef DEBUG_TH
-      arquivoLog = SD.open(nomeConcat, FILE_APPEND);
-      arquivoLog.println("a;b;c;d;e;f");
-      arquivoLog.close();
-    #endif
 
   #ifdef DEBUG
       Serial.print("Salvando os dados no arquivo ");

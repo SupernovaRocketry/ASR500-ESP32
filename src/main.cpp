@@ -65,9 +65,9 @@ void setup() {
         Serial.begin(115200);
     #endif
 
-    #ifdef DEBUG_TH
-        Serial.begin(115200);  
-    #endif  
+    #ifdef DEBUG_COND
+        Serial.begin(115200);
+    #endif
 
     //Faz o setup inicial dos sensores de movimento e altura assim
     //como as portas
