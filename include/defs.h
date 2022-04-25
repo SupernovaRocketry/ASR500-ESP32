@@ -5,6 +5,7 @@
 #define DEBUG
 // #define DEBUG_TEMP
 #define DEBUG_COND
+#define DEBUG_SILENCE
 
 //Definições de sensores
 
@@ -45,5 +46,9 @@
 #define ESTADO_FINALIZADO 'f'
 #define ESTADO_RECUPERANDO 'r'
 #define ESTADO_ESPERA 'e'
+
+#ifdef DEBUG_SILENCE
+    #define PINO_BUZZER 4
+#endif
 
 #endif
