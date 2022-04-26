@@ -2,10 +2,10 @@
 #define DEFS_H
 
 //Definições de debug
-#define DEBUG
+// #define DEBUG
 // #define DEBUG_TEMP
-#define DEBUG_COND
-#define DEBUG_SILENCE
+// #define DEBUG_COND
+// #define DEBUG_SILENCE
 
 //Definições de sensores
 
