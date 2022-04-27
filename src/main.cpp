@@ -1,147 +1,84 @@
-// Inclusão das bibliotecas utilizadas
-#include <SPI.h>        //biblioteca permite a comunicação pelo protocolo SPI 
-#include <SD.h>         //biblioteca permite ler e escrever no cartão SD
-#include <FS.h>         //SD (File System)
-#include <Wire.h>       //permite comunicação I2C
-#include <Arduino.h>    //permite a compreensão do VSCode de que vamos programasr um Arduino
-#include "BMP280.h"     //permite acesso às funções do BMP280
-#include "Wire.h"
+#include <Arduino.h>
+#include <Adafruit_MPU6050.h>
+#include <Adafruit_Sensor.h>
+#include "FS.h"
+#include "SD.h"
+#include "SPI.h"
+#include <Wire.h>
 
-// Inclusão dos meus arquivos
-#include <defs.h>
-#include <recuperacao.h>
-#include <estados.h>
-#include <dados.h>
-
-
-
-// Variáveis de bibliotecas, declarando objetos
-BMP280 bmp; 
-File arquivoLog;
+Adafruit_MPU6050 mpu;
 SPIClass spi;
-
-// char nomeBase[] = "dataLog"; //não foi utilizada
-
-
-// Variáveis de timing
-unsigned long millisAtual   = 0; //atualiza o tempo atual 
-unsigned long atualizaMillis = 0; 
-unsigned long millisLed   = 0;
-unsigned long millisGravacao  = 0;
-unsigned long millisRec = 1000000;
-int n = 0;
-int o =  0;
-
-//Variáveis de dados
-double alturaAtual;
-double alturaInicial = 0;
-double alturaMinima;
-double alturaMaxima =  0;
-double pressaoAtual;
-double temperatura;
-double temperaturaAtual;
-char nomeConcat[16]; //nome do arquivo
-char result = 0;
+File arquivoLog;
 String stringDados;
 
-// variáveis de controle
-bool gravando = false;
-bool abriuParaquedas = false;
-bool abriuRedundancia = false;
-char erro = false;
-char  statusAtual;
-bool estado;
-bool descendo = false;
-bool subiu = false;
-
-
+#define LED_VERMELHO 25
+#define LED_VERDE 26
+#define LED_AZUL 27
+#define PINO_SD_CS 5    //CS VSPI (SD)
+#define PINO_SD_SCK 18  //CLK VSPI (SD)
+#define PINO_SD_MISO 19 //MISO VSPI (SD)
+#define PINO_SD_MOSI 23 //MOSI VSPI (SD)
 
 
 void setup() {
-    #ifdef DEBUG
-        Serial.begin(115200);
-    #endif
 
-    #ifdef DEBUG_TEMP
-        Serial.begin(115200);
-    #endif
 
-    #ifdef DEBUG_COND
-        Serial.begin(115200);
-    #endif
+    // Try to initialize!
+    if (!mpu.begin()) {
+        Serial.println("Failed to find MPU6050 chip");
+        digitalWrite(LED_VERMELHO, HIGH);
+        while (1) {
+        delay(10);
+        }
+    }
 
-    //Faz o setup inicial dos sensores de movimento e altura assim
-    //como as portas
-    #ifdef DEBUG
-    Serial.println("Iniciando o altímetro");
-    #endif
-    
-    inicializa();
+    mpu.setAccelerometerRange(MPU6050_RANGE_16_G);
+    mpu.setGyroRange(MPU6050_RANGE_250_DEG);
+    mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+    Serial.println("");
+    delay(100);
+
+    spi = SPIClass(VSPI);
+    spi.begin(PINO_SD_SCK,PINO_SD_MISO,PINO_SD_MOSI,PINO_SD_CS);
+    while(!SD.begin(PINO_SD_CS, spi)){
+        delay(100);
+        digitalWrite(LED_VERMELHO, HIGH);
+        digitalWrite(LED_VERDE, HIGH);
+    }
+
+    digitalWrite(LED_VERMELHO, LOW);
+    digitalWrite(LED_VERDE, HIGH);
+
+    arquivoLog = SD.open("data.txt", FILE_WRITE);
+    arquivoLog.println("AccelX;AccelY;AccelZ;GyroX;GyroY;GyroZ");
+    arquivoLog.close();
 }
-
-
-
 
 void loop() {
 
-    //Recebendo o tempo atual de maneira a ter uma base de tempo
-    //para uma taxa de atualização
-    millisAtual = millis();
+  /* Get new sensor events with the readings */
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
 
-    if ((millisAtual - atualizaMillis) >= TEMPO_ATUALIZACAO) {
-        #ifdef DEBUG_TEMP
-            Serial.print("Status atual:");
-            Serial.println(statusAtual);
-            Serial.print("estado atual de erro:");
-            Serial.println(erro);
-        #endif
-        //verifica se existem erros e mantém tentando inicializar
-        if (erro) {
-        inicializa();
-        notifica(erro);
-        }
+    stringDados = "";
+    stringDados += millis();
+    stringDados += ";";
+    stringDados += a.acceleration.x;
+    stringDados += ";";
+    stringDados += a.acceleration.y;
+    stringDados += ";";
+    stringDados += a.acceleration.z;
+    stringDados += ";";
+    stringDados += g.gyro.x;
+    stringDados += ";";
+    stringDados += g.gyro.y;
+    stringDados += ";";
+    stringDados += g.gyro.z;
 
-    //Se não existem erros no sistema relacionados a inicialização
-    //dos dispositivos, fazer:
+    arquivoLog = SD.open("data.txt", FILE_APPEND);
+    arquivoLog.println(stringDados);
+    arquivoLog.close();
+    
 
-    if (!erro) {
-
-        #ifdef DEBUG
-            Serial.println("Rodando o loop de funções");
-        #endif
-
-        //Verifica os botões e trata o clique simples e o clique longo
-        //como controle de início/fim da gravação.
-        leBotoes();
-
-        //Recebe os dados dos sensores e os deixa salvo em variáveis
-        adquireDados();
-
-        //Trata os dados, fazendo filtragens e ajustes.
-        // Ainda não há função definida para filtrar os dados
-        // #ifdef DEBUG
-        //     Serial.println("Tratei os dados");
-        // #endif
-
-        //Se a gravação estiver ligada, grava os dados.
-        gravaDados();
-
-        //De acordo com os dados recebidos, verifica condições como a
-        //altura máxima atingida e seta variáveis de controle de modo
-        //que ações consequintes sejam tomadas.
-        checaCondicoes();
-
-        //Faz ajustes finais necessários
-        // finaliza();
-
-        //Caso o voo tenha chegado ao ápice, libera o sistema de recuperação
-        recupera();
-    }
-
-    //Notifica via LEDs e buzzer problemas com o foguete
-    notifica(statusAtual);
-
-    atualizaMillis = millisAtual;
-  }
-    // delay(100);
+  delay(10);
 }
