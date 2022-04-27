@@ -4,7 +4,18 @@
 
 extern unsigned long millisRec;
 extern bool abriuParaquedas;
+extern bool abriuRedundancia;
 extern bool descendo;
+	
+hw_timer_t * timer = NULL;
+
+
+void IRAM_ATTR redundancia() {
+    digitalWrite(REC_PRINCIPAL, LOW); //COMENTAR LINHA CASO NÃO FOR NECESSÁRIO 
+    digitalWrite(REC_SECUNDARIO, HIGH); //aciona o relé secundário
+    abriuRedundancia = 1;
+ 
+}
 
 
 void abreParaquedas() {
@@ -17,6 +28,17 @@ void abreParaquedas() {
     digitalWrite(REC_PRINCIPAL, HIGH);
     millisRec = millis(); //armazena o horário que o paraquedas foi aberto
     abriuParaquedas = 1;
+
+    	
+    timer = timerBegin(0, 80, true);   
+    	
+    timerAttachInterrupt(timer, &redundancia, true); 
+
+    timerAlarmWrite(timer, 1500000, false);
+
+    timerAlarmEnable(timer);
+
+
 }
 
 void recupera () {

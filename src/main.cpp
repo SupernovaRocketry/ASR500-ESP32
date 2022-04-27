@@ -47,6 +47,7 @@ String stringDados;
 // variáveis de controle
 bool gravando = false;
 bool abriuParaquedas = false;
+bool abriuRedundancia = false;
 char erro = false;
 char  statusAtual;
 bool estado;
@@ -90,10 +91,10 @@ void loop() {
 
     // Faz o acionamento secundario do paraquedas após 50 millisegundos.
     // Desabilita o acionamento do paraquedas principal (em tese, já acionado).
-    if ((millis() - millisRec >= TEMPO_RELE) && abriuParaquedas){
-        digitalWrite(REC_PRINCIPAL, LOW); //COMENTAR LINHA CASO NÃO FOR NECESSÁRIO 
-        digitalWrite(REC_SECUNDARIO, HIGH); //aciona o relé secundário
-    }
+    // if ((millis() - millisRec >= TEMPO_RELE) && abriuParaquedas){
+    //     digitalWrite(REC_PRINCIPAL, LOW); //COMENTAR LINHA CASO NÃO FOR NECESSÁRIO 
+    //     digitalWrite(REC_SECUNDARIO, HIGH); //aciona o relé secundário
+    // }
 
     if ((millisAtual - atualizaMillis) >= TEMPO_ATUALIZACAO) {
         #ifdef DEBUG_TEMP

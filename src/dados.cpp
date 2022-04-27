@@ -22,6 +22,7 @@ extern SPIClass spi;
 
 extern unsigned long millisGravacao;
 extern bool abriuParaquedas;
+extern bool abriuRedundancia;
 extern double alturaMaxima;
 extern double alturaInicial;
 
@@ -62,6 +63,8 @@ void gravaDados() {
         stringDados += millisGravacao;
         stringDados += ";";
         stringDados += abriuParaquedas;
+        stringDados += ";";
+        stringDados += abriuRedundancia;
         stringDados += ";";
         stringDados += alturaAtual;
         stringDados += ";";

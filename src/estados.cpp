@@ -365,7 +365,7 @@ void inicializa() {
     }
 
     arquivoLog = SD.open(nomeConcat, FILE_WRITE);
-    arquivoLog.println("tempo;paraquedas;altura_atual;altura_inicial;altura_maxima;pressao_atual;temperatura_atual;estado_atual");
+    arquivoLog.println("tempo;paraquedas;redundancia;altura_atual;altura_inicial;altura_maxima;pressao_atual;temperatura_atual;estado_atual");
     arquivoLog.close();
 
   #ifdef DEBUG
