@@ -21,7 +21,11 @@ String stringDados;
 
 
 void setup() {
-
+    pinMode(LED_VERMELHO, OUTPUT);
+    pinMode(LED_VERDE, OUTPUT);
+    pinMode(LED_AZUL, OUTPUT);
+    digitalWrite(LED_VERMELHO, HIGH);
+    Serial.begin(115200);
 
     // Try to initialize!
     if (!mpu.begin()) {
@@ -35,7 +39,6 @@ void setup() {
     mpu.setAccelerometerRange(MPU6050_RANGE_16_G);
     mpu.setGyroRange(MPU6050_RANGE_250_DEG);
     mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
-    Serial.println("");
     delay(100);
 
     spi = SPIClass(VSPI);
@@ -49,8 +52,8 @@ void setup() {
     digitalWrite(LED_VERMELHO, LOW);
     digitalWrite(LED_VERDE, HIGH);
 
-    arquivoLog = SD.open("data.txt", FILE_WRITE);
-    arquivoLog.println("AccelX;AccelY;AccelZ;GyroX;GyroY;GyroZ");
+    arquivoLog = SD.open("/data.txt", FILE_WRITE);
+    arquivoLog.println("tempo;AccelX;AccelY;AccelZ;GyroX;GyroY;GyroZ");
     arquivoLog.close();
 }
 
@@ -75,10 +78,33 @@ void loop() {
     stringDados += ";";
     stringDados += g.gyro.z;
 
-    arquivoLog = SD.open("data.txt", FILE_APPEND);
+    arquivoLog = SD.open("/data.txt", FILE_APPEND);
     arquivoLog.println(stringDados);
     arquivoLog.close();
     
 
   delay(10);
 }
+
+// void setup() {
+//   // put your setup code here, to run once:
+//     spi = SPIClass(VSPI);
+//     spi.begin(PINO_SD_SCK,PINO_SD_MISO,PINO_SD_MOSI,PINO_SD_CS);
+//     while(!SD.begin(PINO_SD_CS, spi)){
+//         delay(100);
+//         digitalWrite(LED_VERMELHO, HIGH);
+//         digitalWrite(LED_VERDE, HIGH);
+//     }
+
+//     digitalWrite(LED_VERMELHO, LOW);
+//     digitalWrite(LED_VERDE, HIGH);
+
+//     arquivoLog = SD.open("/data.txt", FILE_WRITE);
+//     arquivoLog.println("AccelX;AccelY;AccelZ;GyroX;GyroY;GyroZ");
+//     arquivoLog.close();
+// }
+
+// void loop() {
+//   // put your main code here, to run repeatedly:
+
+// }
